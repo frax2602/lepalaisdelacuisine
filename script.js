@@ -165,17 +165,23 @@ if (contactForm) {
 // ===========================
 // Scroll Animations
 // ===========================
-const animateOnScrollObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in');
-            animateOnScrollObserver.unobserve(entry.target);
-        }
+let animateOnScrollObserver = null;
+
+if ('IntersectionObserver' in window) {
+    animateOnScrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                animateOnScrollObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
     });
-}, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-});
+}
 
 // Observe all sections and cards
 const elementsToAnimate = document.querySelectorAll(
@@ -183,10 +189,16 @@ const elementsToAnimate = document.querySelectorAll(
 );
 
 elementsToAnimate.forEach(element => {
-    element.style.opacity = '0';
-    element.style.transform = 'translateY(30px)';
-    element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    animateOnScrollObserver.observe(element);
+    if (animateOnScrollObserver) {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        animateOnScrollObserver.observe(element);
+    } else {
+        element.classList.add('fade-in');
+        element.style.opacity = '1';
+        element.style.transform = 'translateY(0)';
+    }
 });
 
 // ===========================
@@ -195,9 +207,15 @@ elementsToAnimate.forEach(element => {
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
     const hero = document.querySelector('.hero-content');
-    if (hero && scrolled < window.innerHeight) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-        hero.style.opacity = 1 - (scrolled / window.innerHeight) * 1.5;
+    if (hero) {
+        if (scrolled < window.innerHeight) {
+            hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+            const opacity = 1 - (scrolled / window.innerHeight) * 1.5;
+            hero.style.opacity = Math.max(0, Math.min(1, opacity));
+        } else {
+            hero.style.transform = `translateY(${window.innerHeight * 0.5}px)`;
+            hero.style.opacity = 0;
+        }
     }
 });
 
